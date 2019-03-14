@@ -7,6 +7,7 @@ module Oink
   module Reports
     class MemoryUsageReport < Base
       def print(output)
+        oink_entry_count = 0
         output.puts "---- MEMORY THRESHOLD ----"
         output.puts "THRESHOLD: #{@threshold/1024} MB\n"
 
@@ -40,6 +41,7 @@ module Oink
 
             elsif line =~ /Oink Log Entry Complete/
 
+              oink_entry_count += 1
               @pids[pid][:request_finished] = true
               unless @pids[pid][:current_memory_reading] == -1 || @pids[pid][:last_memory_reading] == -1
                 memory_diff = @pids[pid][:current_memory_reading] - @pids[pid][:last_memory_reading]
@@ -65,6 +67,7 @@ module Oink
           end # end each_line
         end # end each input
 
+        output.puts "---- Oink Entries Parsed: #{oink_entry_count} ----\n" if @format == :verbose
         print_summary(output)
 
       end
