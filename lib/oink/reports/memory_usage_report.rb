@@ -82,24 +82,33 @@ module Oink
                          bad_requests,
                          format)
         pids[pid][:request_finished] = true
-        unless pids[pid][:current_memory_reading] == -1 || pids[pid][:last_memory_reading] == -1
-        memory_diff = pids[pid][:current_memory_reading] - pids[pid][:last_memory_reading]
+        # setup some vars for simplification
+        
+        current_memory_reading = pids[pid][:current_memory_reading]
+        last_memory_reading = pids[pid][:last_memory_reading]
+        buffer = pids[pid][:buffer]
+
+        # process
+        unless current_memory_reading == -1 || last_memory_reading == -1
+        memory_diff = current_memory_reading - last_memory_reading
+
         if memory_diff > threshold
-          bad_actions[pids[pid][:action]] ||= 0
-          bad_actions[pids[pid][:action]] += 1
+          action = pids[pid][:action]
+          bad_actions[action] ||= 0
+          bad_actions[action] += 1
           date = HODEL_LOG_FORMAT_REGEX.match(line).captures[0]
-          bad_requests.push(MemoryOinkedRequest.new(pids[pid][:action], date, pids[pid][:buffer], memory_diff))
+          bad_requests.push(MemoryOinkedRequest.new(action, date, buffer, memory_diff))
           if format == :verbose
-            pids[pid][:buffer].each { |b| output.puts b }
+            buffer.each { |b| output.puts b }
             output.puts "---------------------------------------------------------------------"
           end
-          bad_actions_averaged[pids[pid][:action]] ||= []
-          bad_actions_averaged[pids[pid][:action]] << memory_diff
+          bad_actions_averaged[action] ||= []
+          bad_actions_averaged[action] << memory_diff
         end
         end
 
         pids[pid][:buffer] = []
-        pids[pid][:last_memory_reading] = pids[pid][:current_memory_reading]
+        pids[pid][:last_memory_reading] = current_memory_reading
         pids[pid][:current_memory_reading] = -1
       end
     end
