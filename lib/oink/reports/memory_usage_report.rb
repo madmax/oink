@@ -86,7 +86,7 @@ module Oink
         memory_diff = pids[pid][:current_memory_reading] - pids[pid][:last_memory_reading]
         if memory_diff > threshold
           bad_actions[pids[pid][:action]] ||= 0
-          bad_actions[pids[pid][:action]] = bad_actions[pids[pid][:action]] + 1
+          bad_actions[pids[pid][:action]] += 1
           date = HODEL_LOG_FORMAT_REGEX.match(line).captures[0]
           bad_requests.push(MemoryOinkedRequest.new(pids[pid][:action], date, pids[pid][:buffer], memory_diff))
           if format == :verbose
