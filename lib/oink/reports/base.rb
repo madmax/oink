@@ -29,13 +29,45 @@ module Oink
             output.puts "---------------------------------------------------------------------"
           end
         end
+        output_worst_actions(@bad_actions, output)
+        output_aggregated_totals(@bad_actions_averaged, output)
+      end
+
+      def output_worst_actions(bad_actions, output)
         output.puts "\nWorst Actions:"
-        @bad_actions.sort{|a,b| b[1]<=>a[1]}.each { |elem|
+        # this is a count, of how many times
+        # the "bad" action happened
+        bad_actions.sort{|a,b| b[1]<=>a[1]}.each { |elem|
           output.puts "#{elem[1]}, #{elem[0]}"
         }
+      end
+      
+      def output_aggregated_totals(bad_actions_averaged, output)
         output.puts "\nAggregated Totals:\n"
-        if @bad_actions_averaged.length > 0
-          action_stats =  @bad_actions_averaged.map { |action,values|
+        if bad_actions_averaged.length > 0
+          action_stats = calculate_action_stats(bad_actions_averaged)
+          action_width = bad_actions_averaged.keys.map{|k| k.length}.max
+
+          output.puts "#{'Action'.ljust(action_width)}\tMax\tMean\tMin\tTotal\tNumber of requests"
+          action_stats.sort{|a,b| b[:total]<=>a[:total]}.each do |action_stat|
+
+            output.puts "#{
+             action_stat[:action].ljust(action_width)
+            }\t#{
+              action_stat[:max]
+            }\t#{
+              action_stat[:mean]
+            }\t#{
+              action_stat[:min]
+            }\t#{
+              action_stat[:total]
+            }\t#{
+              action_stat[:count]}"
+          end
+        end
+      end
+      def calculate_action_stats(bad_actions_averaged)
+        bad_actions_averaged.map { |action,values|
             total = values.inject(0){ |sum,x| sum+x }
             {
               :action => action,
@@ -46,13 +78,7 @@ module Oink
               :count => values.length,
             }
           }
-          action_width = @bad_actions_averaged.keys.map{|k| k.length}.max
-          output.puts "#{'Action'.ljust(action_width)}\tMax\tMean\tMin\tTotal\tNumber of requests"
-          action_stats.sort{|a,b| b[:total]<=>a[:total]}.each do |action_stat|
-            output.puts "#{action_stat[:action].ljust(action_width)}\t#{action_stat[:max]}\t#{action_stat[:mean]}\t#{action_stat[:min]}\t#{action_stat[:total]}\t#{action_stat[:count]}"
-          end
-        end
       end
-    end
+    end # class
   end
 end
