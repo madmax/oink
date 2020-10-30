@@ -2,8 +2,12 @@ module Oink
   module Reports
     class Base
 
-      FORMATS = %w[verbose short-summary summary]
-      FORMAT_ALIASES = { "v" => "verbose", "ss" => "short-summary", "s" => "summary" }
+      FORMATS = %w[verbose short-summary summary graphed]
+      FORMAT_ALIASES = { 'v' => 'verbose',
+                         'ss' => 'short-summary',
+                         's' => 'summary',
+                         'g' => 'graphed'
+                       }
       HODEL_LOG_FORMAT_REGEX = /^(\w+ \d{2} \d{2}:\d{2}:\d{2})/
 
       def initialize(input, threshold, options = {})
