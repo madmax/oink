@@ -6,6 +6,7 @@ module Oink
       attr_accessor :action, :datetime, :log_lines, :oink_number
 
       def initialize(action, datetime, log_lines, oink_number)
+        #oink_number is either memory or instantiation count
         @action = action
         @datetime = datetime
         @log_lines = log_lines
