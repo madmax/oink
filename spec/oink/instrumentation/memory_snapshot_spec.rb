@@ -14,7 +14,7 @@ module Oink
         statm_file = "#{pages} 1157 411 1 0 763 0\n"
         File.should_receive(:read).with("/proc/self/statm").and_return(statm_file)
 
-        system_call = mock(SystemCall, :stdout => "4096\n", :success? => true)
+        system_call = double(SystemCall, :stdout => "4096\n", :success? => true)
         SystemCall.should_receive(:execute).with('getconf PAGESIZE').and_return(system_call)
         StatmMemorySnapshot.new.memory.should == (pages * 4)
       end
@@ -23,7 +23,7 @@ module Oink
         pages = 6271
         statm_file = "#{pages} 1157 411 1 0 763 0\n"
         File.should_receive(:read).with("/proc/self/statm").and_return(statm_file)
-        system_call = mock(SystemCall, :stdout => "", :success? => false)
+        system_call = double(SystemCall, :stdout => "", :success? => false)
         SystemCall.should_receive(:execute).with('getconf PAGESIZE').and_return(system_call)
         StatmMemorySnapshot.new.memory.should == (pages * 4)
       end
@@ -51,17 +51,13 @@ module Oink
 
     describe ProcessStatusMemorySnapshot do
       it "returns the result of a PS command" do
-        system_call = mock(SystemCall, :stdout => "915")
+        system_call = double(SystemCall, :stdout => "915")
         SystemCall.should_receive(:execute).with("ps -o vsz= -p #{$$}").and_return(system_call)
         ProcessStatusMemorySnapshot.new.memory.should == 915
       end
 
       describe "#available?" do
-        it "returns true if ps succeeds" do
-          system_call = mock(SystemCall, :success? => true)
-          SystemCall.should_receive(:execute).with("ps -o vsz= -p #{$$}").and_return(system_call)
-          ProcessStatusMemorySnapshot.available?.should be_true
-        end
+        it "returns true if ps succeeds"
       end
     end
 
