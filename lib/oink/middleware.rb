@@ -28,7 +28,9 @@ module Oink
     end
 
     def log_routing(env)
-      routing_info = rails3_routing_info(env) || rails2_routing_info(env)
+      routing_info = rails3_routing_info(env) \
+                      || rails2_routing_info(env) \
+                      || grape_routing_info(env)
       if routing_info
         controller = routing_info['controller']
         action     = routing_info['action']
@@ -66,5 +68,27 @@ module Oink
       ActiveRecord::Base.reset_instance_type_count
     end
 
+    def grape_routing_info(env)
+      return nil if env.nil?
+      options     =  env['grape.routing_args']&.[](:route_info).try(:app).try(:options)
+      if options
+        options     = env['grape.routing_args'][:route_info].app.options
+        controller  = options[:for].to_s.split('::').last.underscore
+        # note source location could be added via
+        # source      = env['grape.routing_args'][:route_info].app.source.to_s
+        # ex. source: #<Proc:0x000055f4e77da2f8@/usr/src/app/app/api/v1/services.rb:688>
+        action      = options[:path].try(:first)
+        if action
+          action    = action.to_s
+          action    = action.gsub('/', 'sl_')
+          action    = action.gsub(':', 'col_')
+        end
+        method      = options[:method].try(:first)
+        full_action="#{action}_#{method}"
+        {'controller'=>controller, 'action'=>full_action}
+      else
+        nil
+      end
+    end
   end
 end
