@@ -1,7 +1,8 @@
-require "date"
-require "oink/reports/base"
-require "oink/reports/memory_oinked_request"
-require "oink/reports/priority_queue"
+require 'date'
+require 'oink/reports/base'
+require 'oink/reports/memory_oinked_request'
+require 'oink/reports/priority_queue'
+require 'gruff'
 
 module Oink
   module Reports
@@ -51,7 +52,9 @@ module Oink
         print_summary(output)
 
       end
+
       private
+      
       def extract_pid_from_line(line, pids)
         if line =~ /rails\[(\d+)\]/
           pid = $1
@@ -61,6 +64,7 @@ module Oink
         end
         nil
       end
+
       def record_action(action, pid, pids)
         unless pids[pid][:request_finished]
           pids[pid][:last_memory_reading] = -1
@@ -68,9 +72,11 @@ module Oink
         pids[pid][:action] = action
         pids[pid][:request_finished] = false
       end
+
       def record_memory_usage(memory_reading, pid, pids)
         pids[pid][:current_memory_reading] = memory_reading
       end
+
       # TODO: refactor to not require a bajillion params
       def complete_entry(line,
                          pid,
@@ -90,21 +96,21 @@ module Oink
 
         # process
         unless current_memory_reading == -1 || last_memory_reading == -1
-        memory_diff = current_memory_reading - last_memory_reading
+          memory_diff = current_memory_reading - last_memory_reading
 
-        if memory_diff > threshold
-          action = pids[pid][:action]
-          bad_actions[action] ||= 0
-          bad_actions[action] += 1
-          date = HODEL_LOG_FORMAT_REGEX.match(line).captures[0]
-          bad_requests.push(MemoryOinkedRequest.new(action, date, buffer, memory_diff))
-          if format == :verbose
-            buffer.each { |b| output.puts b }
-            output.puts "---------------------------------------------------------------------"
+          if memory_diff > threshold
+            action = pids[pid][:action]
+            bad_actions[action] ||= 0
+            bad_actions[action] += 1
+            date = HODEL_LOG_FORMAT_REGEX.match(line).captures[0]
+            bad_requests.push(MemoryOinkedRequest.new(action, date, buffer, memory_diff))
+            if format == :verbose
+              buffer.each { |b| output.puts b }
+              output.puts "---------------------------------------------------------------------"
+            end
+            bad_actions_averaged[action] ||= []
+            bad_actions_averaged[action] << memory_diff
           end
-          bad_actions_averaged[action] ||= []
-          bad_actions_averaged[action] << memory_diff
-        end
         end
 
         pids[pid][:buffer] = []
