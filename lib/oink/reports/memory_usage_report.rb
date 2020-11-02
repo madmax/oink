@@ -8,6 +8,12 @@ module Oink
   module Reports
     class MemoryUsageReport < Base
       def print(output)
+        @chart = nil
+        if @format == :graphed
+          @chart = Gruff::StackedBar.new
+          @chart.title='Bad Actions'
+        end
+
         oink_entry_count = 0
         output.puts "---- MEMORY THRESHOLD ----"
         output.puts "THRESHOLD: #{@threshold/1024} MB\n"
@@ -51,6 +57,7 @@ module Oink
         output.puts "---- Oink Entries Parsed: #{oink_entry_count} ----\n" if @format == :verbose
         print_summary(output)
 
+        generate_graph() if @format == :graphed
       end
 
       private
@@ -89,7 +96,7 @@ module Oink
                          format)
         pids[pid][:request_finished] = true
         # setup some vars for simplification
-        
+
         current_memory_reading = pids[pid][:current_memory_reading]
         last_memory_reading = pids[pid][:last_memory_reading]
         buffer = pids[pid][:buffer]
@@ -117,6 +124,43 @@ module Oink
         pids[pid][:last_memory_reading] = current_memory_reading
         pids[pid][:current_memory_reading] = -1
       end
+
+      def generate_graph
+        graph_filename='oink_memory_usage.png'
+        begin
+          labels = []
+          action_stats = calculate_action_stats(@bad_actions_averaged)
+          mins= []
+          maxes=[]
+          action_stats
+            .sort_by{ |x| x[:action]}
+            .each do | action_hash |
+              labels << action_hash[:action]
+              mins << action_hash[:min]
+              maxes << action_hash[:max]
+            end
+          labels_hash = {}
+          (0...labels.size).each do |idx|
+           labels_hash[idx] = labels[idx]
+          end
+
+          @chart.data('minimum', mins)
+          @chart.data('maximum', maxes)
+          @chart.labels = labels_hash
+
+          @chart.labels = Hash[*((0...labels.size).zip((0..labels.size)).flatten)]
+          puts "\nGraph Key:"
+          labels_hash.each do |k,v|
+            puts "#{k}: #{v}"
+          end
+
+          @chart.write(graph_filename)
+          puts "\nWrote graph to #{graph_filename}"
+        rescue StandardError => e
+          puts "error writing graph file #{graph_filename}: #{e.message}"
+        end
+      end
     end
+
   end
 end
