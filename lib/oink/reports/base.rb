@@ -27,7 +27,7 @@ module Oink
         output.puts "\n-- SUMMARY --\n"
         output.puts "Worst Requests:"
         @bad_requests.each_with_index do |offender, index|
-          output.puts "#{index + 1}. #{offender.datetime}, #{offender.display_oink_number}, #{offender.action}"
+          output.puts "#{index + 1}. #{offender.datetime}, #{offender.display_oink_number}, #{ungrape_action(offender.action)}"
           if @format == :summary
             offender.log_lines.each { |b| output.puts b }
             output.puts "---------------------------------------------------------------------"
@@ -41,11 +41,12 @@ module Oink
         output.puts "\nWorst Actions:"
         # this is a count, of how many times
         # the "bad" action happened
+
         bad_actions.sort{|a,b| b[1]<=>a[1]}.each { |elem|
-          output.puts "#{elem[1]}, #{elem[0]}"
+          output.puts "#{elem[1]}, #{ungrape_action(elem[0])}"
         }
       end
-      
+
       def output_aggregated_totals(bad_actions_averaged, output)
         output.puts "\nAggregated Totals:\n"
         if bad_actions_averaged.length > 0
@@ -74,7 +75,7 @@ module Oink
         bad_actions_averaged.map { |action,values|
             total = values.inject(0){ |sum,x| sum+x }
             {
-              :action => action,
+              :action => ungrape_action(action),
               :total => total,
               :mean => total/values.length,
               :max => values.max,
@@ -82,6 +83,13 @@ module Oink
               :count => values.length,
             }
           }
+      end
+      def ungrape_action(action)
+        a = action.sub('#', '/').gsub('sl_', '/').gsub('col_', ':').gsub('//', '/')
+        if x = a.match(/(.*?)_(GET|PUT|POST|PATCH|DELETE|HEAD|OPTIONS)$/)
+          return "#{x[2]} #{x[1]}"
+        end
+        a
       end
     end # class
   end

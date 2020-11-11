@@ -61,7 +61,7 @@ module Oink
       end
 
       private
-      
+
       def extract_pid_from_line(line, pids)
         if line =~ /rails\[(\d+)\]/
           pid = $1
@@ -136,8 +136,8 @@ module Oink
             .sort_by{ |x| x[:action]}
             .each do | action_hash |
               labels << action_hash[:action]
-              mins << action_hash[:min]
-              maxes << action_hash[:max]
+              mins << action_hash[:min].to_f / 1024
+              maxes << action_hash[:max].to_f / 1024
             end
           labels_hash = {}
           (0...labels.size).each do |idx|
@@ -151,7 +151,7 @@ module Oink
           @chart.labels = Hash[*((0...labels.size).zip((0..labels.size)).flatten)]
           puts "\nGraph Key:"
           labels_hash.each do |k,v|
-            puts "#{k}: #{v}"
+            puts "#{k}: #{ungrape_action(v)}"
           end
 
           @chart.write(graph_filename)
